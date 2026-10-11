@@ -1,0 +1,6 @@
+# The program itself needs NO external package: it only uses the Python
+# standard library (Python 3.9 or newer).
+#
+# The packages below are needed only to run the automated tests:
+#   pip install -r requirements.txt
+pytest>=7.0
