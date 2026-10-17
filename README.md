@@ -1,232 +1,263 @@
 # document-normalizer
 
-A command-line program that scans a folder (and all its subfolders),
-normalizes **.TXT**, **.MD** and **.CSV** text files, and records every run
-in a `session.json` file inside the analyzed folder. The `ricerca` command then
-lets you search the processed documents in the session history.
+[![Apri in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Sica997rius/Document-normalizer/blob/main/document_normalizer_colab.ipynb)
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Sica997rius/Document-normalizer/blob/main/document_normalizer_colab.ipynb)
+**Provalo su Google Colab:** apri il link qui sopra e scegli *Runtime → Esegui tutto*. Non serve installare niente né avere un account GitHub.
 
-## Try it in Google Colab
+Programma da riga di comando che **pulisce e ordina i file di testo di una cartella** (`.txt`, `.md`, `.csv`), propone un nome file ordinato, trova la data, crea un breve estratto di ogni file e **registra ogni esecuzione in uno storico JSON**.
 
-Open the notebook with the button above (or
-[this link](https://colab.research.google.com/github/Sica997rius/Document-normalizer/blob/main/document_normalizer_colab.ipynb))
-and choose *Runtime → Run all*. No GitHub account or installation is needed:
-the package is embedded in the notebook, which also creates sample files to analyze.
+Prima di toccare i file chiede **una sola conferma**: se rispondi "no", sul disco non cambia nulla.
+Alla fine puoi **cercare una parola tra i titoli** della sessione appena salvata.
 
-To share it, send the link above. Everyone runs it in their own Colab session.
+Scritto in Python, usa **solo la libreria standard**: non servono pacchetti esterni.
 
-## What it does
+---
 
-1. Asks which folder to analyze (path relative to the folder the program is started from).
-   `session.json` files are not listed as documents.
-2. Lists every file found, one per line, and splits them into:
-   - **allowed**: `.txt`, `.md`, `.csv`
-   - **disallowed**: every other extension (only listed, never touched).
-   Symbolic links are skipped.
-3. For each allowed file:
-   - **reads the file safely**: detects UTF-8 (with or without BOM), UTF-16 and cp1252;
-     binary files (control bytes or too many "high" bytes) are detected and left unchanged;
-   - **normalizes the text**: Unicode NFC form, invisible and control characters removed,
-     line endings unified to `\n`, multiple spaces collapsed to one, at most one blank
-     line in a row. In CSV files tabs are kept;
-   - **computes the title**: for TXT/MD from the file name (underscores and hyphens become
-     spaces, each word is capitalized, dates in the name are left as they are);
-     for CSV files the name is only cleaned of extra spaces;
-   - **counts the words** and creates an **excerpt** (160 characters for TXT/MD; for CSV
-     files the first data row as `column: value`, up to 20 columns);
-   - **looks for a date**: in the text for TXT/MD, only in the file name for CSV files.
-     Recognized formats: `YYYY-MM-DD` and `DD/MM/YYYY` (also with `.` or `-`);
-     a European date with day ≤ 12 is marked as `uncertain format`.
-4. If the text or the title changed, rewrites the file as UTF-8 and/or renames it.
-   If the new name is already taken it uses `name (2)`, `name (3)`, …
-5. Appends the session (progressive ID, date, documents with original and new path,
-   changes, date found, excerpt) to `session.json` **in the analyzed folder**.
+## Cosa fa, in breve
 
-### Save modes
+Per ogni file della cartella (e delle sottocartelle):
 
-At startup the program asks how to apply the changes:
+| | File `.txt` e `.md` | File `.csv` |
+|---|---|---|
+| **Pulizia del testo** | spazi e tab doppi, righe vuote in eccesso, a capo di Windows, caratteri invisibili | uguale, ma **i tab restano** (in un CSV separano le colonne) |
+| **Nuovo nome** | maiuscole e spazi: `nota_riunione.txt` → `Nota Riunione.txt` | il nome resta quello, solo ripulito: `report  mese.csv` → `report mese.csv` |
+| **Data** | la prima data valida **nel testo** | solo se è **nel nome del file** |
+| **Estratto** | i primi 160 caratteri | la prima riga, una coppia `colonna: valore` per riga |
 
-| Choice | Behavior |
+Altre regole:
+
+- **File binari** (immagini, archivi… salvati con estensione `.txt`): estratto `FILE BINARIO NON LEGIBILE.`; il contenuto non viene mai modificato.
+- **Caratteri stranieri o non previsti** (cinese, emoji, `<`, `{`…): all'estratto si aggiunge `(alcuni caratteri non sono legibili o sono relativi ad altre lingue straniere)`.
+- **File salvati con il Blocco note di Windows** (codifica cp1252) e **UTF-16**: letti correttamente, senza perdere gli accenti.
+- **Date**: riconosce `2024-03-15`, `15/03/2024`, `15.03.2024`, `15-03-2024`; scarta le date impossibili (`31/02/2024`); segnala come `uncertain format` quelle che si potrebbero leggere al contrario (`05/06/2024`).
+- **Nomi già occupati**: se il nuovo nome esiste già, usa `Nome (2).txt`, `Nome (3).txt`…
+- **File vuoti** saltati, **collegamenti simbolici** ignorati, **altre estensioni** elencate ma non toccate.
+
+---
+
+## Requisiti
+
+- **Python 3.9 o più recente** ([python.org](https://www.python.org/downloads/))
+- **Git**, solo per scaricare il progetto con `git clone` (in alternativa: *Code → Download ZIP* su GitHub)
+
+---
+
+## Installazione
+
+Il progetto si installa in un **ambiente virtuale**: una cartella `.venv` che contiene una copia di Python riservata a questo progetto, così non tocchi il Python del sistema.
+
+### 1. Scarica il progetto
+
+```bash
+git clone https://github.com/Sica997rius/document-normalizer.git
+cd document-normalizer
+```
+
+### 2. Crea e attiva l'ambiente virtuale
+
+**Windows (PowerShell o Prompt dei comandi)**
+
+```bat
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+**macOS / Linux**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Quando l'ambiente è attivo, all'inizio della riga del terminale compare `(.venv)`.
+
+> Su Windows, se PowerShell blocca l'attivazione con un errore sugli "script", esegui una volta
+> `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` e riprova.
+
+### 3. Installa
+
+```bash
+pip install -r requirements.txt   # strumenti per i test (pytest)
+pip install -e .                  # il programma e il comando document-normalizer
+```
+
+`-e` ("editable") collega l'installazione alla cartella del progetto: se modifichi il codice, la modifica vale subito, senza reinstallare.
+
+Verifica:
+
+```bash
+document-normalizer --version
+```
+
+---
+
+## Esecuzione
+
+```bash
+document-normalizer                          # ti chiede quale cartella analizzare
+document-normalizer percorso/della/cartella  # cartella indicata direttamente
+python -m document_normalizer                # alternativa senza il comando installato
+document-normalizer --help                   # tutte le opzioni
+```
+
+Opzioni:
+
+| Opzione | Significato |
 |---|---|
-| `1` / `together` | applies all changes to all files right away, without asking |
-| `2` / `separately` | asks `y/n` for each changed file before rewriting or renaming it |
+| `cartella` | cartella da analizzare (se manca, viene chiesta) |
+| `--session-file FILE` | file storico da usare (predefinito: `session.json` nella cartella da cui lanci il comando) |
+| `--version` | mostra la versione |
 
-Any other answer is rejected and the question is asked again.
+### Cosa succede durante un'esecuzione
 
-> ⚠️ The program **modifies files on disk**. Make a copy of the folder before using it.
+1. Il programma elenca i file trovati, divisi in ammessi (testo, dati, markdown) e non ammessi.
+2. Analizza ogni file e mostra titolo, numero di parole, data, codifica, estratto e modifiche proposte. **In questa fase non scrive nulla.**
+3. Alla fine mostra l'elenco delle modifiche e chiede **una volta sola**:
+   ```
+   Do you want to save ALL these changes to disk? (y/n):
+   ```
+   - `y` (oppure `s`, `si`): riscrive i testi e rinomina i file;
+   - `n`: non tocca niente.
+4. Aggiunge la sessione allo storico `session.json`.
+5. Chiede se vuoi **cercare una parola nei titoli della sessione appena salvata**. Scrivi una parola alla volta; premi solo Invio per finire.
+   La ricerca ignora maiuscole e minuscole (`nota`, `NOTA` e `Nota` danno lo stesso risultato) e trova la parola anche dentro il titolo (`verb` trova `2024-03-15 Verbale`):
+   ```
+   Do you want to search a word in the titles of session 1? (y/n): y
 
-## Requirements
+   Word to search (press Enter to finish): NOTA
+   1 title(s) contain 'NOTA':
+     - Nota Sporca  ->  file_di_prova/Nota Sporca.txt
 
-- Python **3.9** or later
-- No external libraries: only the standard library is used
-  (see [requirements.txt](requirements.txt))
+   Word to search (press Enter to finish):
+   ```
+   Se non hai salvato le modifiche, accanto al titolo compare `(not saved)`: il titolo è quello proposto, ma il file ha ancora il nome vecchio.
 
-## Installation
+---
 
-Get the code:
+## Prova con l'archivio di esempio
 
-```bash
-git clone https://github.com/Sica997rius/Document-normalizer.git
-cd Document-normalizer
-```
+In `sample_data/file_di_prova.zip` ci sono 15 file scelti per mettere alla prova tutte le regole: testo sporco, file già pulito, file di Windows, UTF-16, finto binario, caratteri cinesi ed emoji, data nel nome, nome fatto solo di `_`, file vuoto, CSV con punto e virgola, con virgolette e a capo, senza intestazione, separato da tab, un `.png` e una data impossibile in una sottocartella.
 
-Installation needs **no internet connection**: the package is built by a small
-backend in `_build/` that uses only the standard library, so pip does not have to
-download setuptools.
-
-From the project folder:
-
-```bash
-pip install .
-```
-
-or, in editable mode (code changes take effect without reinstalling):
-
-```bash
-pip install -r requirements.txt
-```
-
-Both create two commands: `document-normalizer` and `ricerca`.
-
-A ready-made wheel is in `dist/`. Upload it to Google Colab and install it with:
-
-```python
-!pip install /content/document_normalizer-0.1.0-py3-none-any.whl
-```
-
-After changing the code, rebuild the wheel with:
+**Lavora sempre su una copia**: rispondendo `y` i file vengono modificati davvero.
 
 ```bash
-pip wheel --no-deps . -w dist
+# macOS / Linux
+unzip sample_data/file_di_prova.zip
+document-normalizer file_di_prova
 ```
 
-## Usage
-
-Normalization, from the terminal:
-
-```bash
-document-normalizer
+```powershell
+# Windows (PowerShell)
+Expand-Archive sample_data\file_di_prova.zip -DestinationPath .
+document-normalizer file_di_prova
 ```
 
-or:
+Esempio di output per un CSV:
 
-```bash
-python -m document_normalizer
+```
+Document ID 3 (vendite_15-03-2024.csv) processed successfully:
+  Title: vendite_15-03-2024
+  Words: 12
+  Date found: 2024-03-15
+  Encoding: utf-8
+  Excerpt:
+    cliente: Rossi
+    città: Torino
+    importo: 1.250,50
+  Changes: Changes made: text was normalized
 ```
 
-In a Colab cell:
+Per rifare la prova da capo, cancella la cartella `file_di_prova` e `session.json` ed estrai di nuovo l'archivio.
 
-```python
-from document_normalizer import main
-main()
-```
+---
 
-Searching the history:
+## Lo storico `session.json`
 
-```bash
-ricerca
-```
-
-or:
-
-```bash
-python -m ricerca
-```
-
-First type the analyzed folder (Enter = current folder), then one or more words: the documents containing **all** of them in the title,
-file name, paths, changes or date are shown. Press Enter on an empty line to exit.
-
-## The `session.json` file
-
-Saved in the analyzed folder. A list of sessions, one per run on that folder:
+Ogni esecuzione aggiunge una sessione. Ogni file ha come **chiave il suo percorso completo originale** (due file con lo stesso nome in cartelle diverse restano distinti):
 
 ```json
 [
   {
     "session_id": 1,
-    "session_date": "2026-10-17T10:30:00",
+    "session_date": "2026-10-12T00:45:10.123456",
     "documents": {
-      "folder/meeting_notes.txt": {
-        "file_name": "meeting_notes.txt",
-        "title": "Meeting Notes",
-        "original_path": "folder/meeting_notes.txt",
-        "new_path": "folder/Meeting Notes.txt",
+      "/home/utente/file_di_prova/nota_sporca.txt": {
+        "file_name": "nota_sporca.txt",
+        "title": "Nota Sporca",
+        "original_path": "/home/utente/file_di_prova/nota_sporca.txt",
+        "new_path": "/home/utente/file_di_prova/Nota Sporca.txt",
         "changes": ["Changes made: title was changed, text was normalized"],
-        "date": "2026-03-15",
-        "excerpt": "Opening text of the document..."
+        "saved": true
       }
     }
   }
 ]
 ```
 
-## Structure
+- `saved`: `true` se le modifiche sono state scritte sul disco.
+- `new_path`: il **nuovo** percorso se hai salvato, altrimenti **quello vecchio**.
+
+---
+
+## Struttura del progetto
 
 ```
-document_normalizer/
+document-normalizer/
+├── document_normalizer/        il pacchetto Python
+│   ├── __init__.py             versione ed elementi principali esportati
+│   ├── __main__.py             permette "python -m document_normalizer"
+│   ├── cli.py                  il programma interattivo (funzione main)
+│   ├── config.py               impostazioni: estensioni, regole, testi, limiti
+│   ├── models.py               classi Document e Session
+│   ├── folder_reader.py        lettura cartella, lettura sicura, regole TXT/MD
+│   ├── csv_reader.py           regole solo per i CSV
+│   └── session_store.py        lettura, scrittura e ricerca nei titoli di session.json
+├── tests/                      test automatici (pytest)
+├── sample_data/
+│   └── file_di_prova.zip       archivio di prova con 15 casi
+├── pyproject.toml              configurazione del pacchetto e del comando
+├── requirements.txt            dipendenze per i test
 ├── LICENSE
-├── pyproject.toml
-├── requirements.txt
-├── README.md
-├── document_normalizer_colab.ipynb   # Google Colab notebook
-├── _build/
-│   └── backend.py             # build backend, standard library only
-├── dist/
-│   └── document_normalizer-0.1.0-py3-none-any.whl
-├── make_test_files.py         # random test-file generator
-├── test_files/                # 18 sample files to try the program on
-└── src/
-    ├── document_normalizer/   # normalization
-    │   ├── __init__.py
-    │   ├── __main__.py
-    │   ├── main.py
-    │   ├── models.py
-    │   └── readers.py
-    └── ricerca/               # history search
-        ├── __init__.py
-        ├── __main__.py
-        ├── main.py
-        ├── models.py
-        └── readers.py
+└── README.md
 ```
 
-| File | Contents |
-|---|---|
-| `models.py` | imports, constants (regexes, allowed extensions, excerpt length), `Session` and `Document` classes |
-| `readers.py` | `DocumentReader` (base), `TextReader` (TXT/MD), `CSVReader` classes, `READERS` dictionary, `FolderReader` alias, `print_file_list` function |
-| `document_normalizer/main.py` | the normalization program and the search functions |
-| `ricerca/main.py` | `load_history`, `search_documents`, `print_results` and the `main()` search loop |
+Le impostazioni modificabili (lunghezza dell'estratto, caratteri considerati leggibili, colonne mostrate nei CSV, testi delle note…) sono tutte in `config.py`.
 
-## Testing
+---
 
-`test_files/` holds 18 random sample files: TXT/MD/CSV in UTF-8, UTF-8 with BOM,
-cp1252 and UTF-16, CRLF/CR line endings, an empty file, a binary file disguised
-as text, disallowed extensions, subfolders and dates in the names.
+## Test
 
-The program **rewrites and renames** these files, so recreate them before every test:
+Con l'ambiente virtuale attivo, dalla cartella del progetto:
 
 ```bash
-python make_test_files.py test_files 18
+python -m pytest
 ```
 
-The script takes `[folder] [count] [seed]`; the same seed always gives the same files.
-For a larger test, e.g. 1000 files:
+I test controllano le singole regole (pulizia, date, titoli, codifiche, CSV, ricerca) e l'intero programma sull'archivio di prova, rispondendo sia `y` sia `n`.
 
-```bash
-python make_test_files.py big_test 1000
+---
+
+## Uso da Google Colab
+
+```python
+!git clone https://github.com/Sica997rius/document-normalizer.git
+%cd document-normalizer
+!pip install -q -e .
+!unzip -q -o sample_data/file_di_prova.zip
 ```
 
-Then start the program from the project folder and type `test_files` (or `big_test`)
-as the folder to analyze.
+Poi, in una nuova cella:
 
-## Compatibility notes
+```python
+from document_normalizer.cli import main
+main(["file_di_prova"])
+```
 
-- Sessions saved by older versions use the `"Excerpt"` key; the search reads both
-  `"excerpt"` and `"Excerpt"`.
-- Older versions saved `session.json` in the folder the program was started from:
-  to search it, type that folder (or press Enter from it) when `ricerca` asks.
+Colab chiede le risposte (Invio per iniziare, poi `y` o `n`) nella casella che compare sotto la cella.
+Se hai modificato il codice, riavvia la sessione (*Runtime → Riavvia sessione*) prima di rieseguire: Colab tiene in memoria la versione già importata.
 
-## License
+---
 
-MIT - see [LICENSE](LICENSE).
+## Licenza
+
+[MIT](LICENSE)
