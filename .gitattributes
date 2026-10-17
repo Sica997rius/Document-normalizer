@@ -1,0 +1,3 @@
+# Sample files must stay byte-for-byte (CR/CRLF line endings, encodings): no conversion
+test_files/** -text
+*.whl binary

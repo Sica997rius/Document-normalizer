@@ -7,15 +7,17 @@ the **.TXT**, **.MD** and **.CSV** files, gives them a tidy name, finds a date,
 builds a short excerpt of each file and records every run in a `session.json`
 file inside the analyzed folder. A second program, `ricerca`, searches that history.
 
-Written in Python with the **standard library only**: no packages to install.
+Written in Python with the **standard library only**: no packages to install
+(see [requirements.txt](requirements.txt)).
 
 ## Try it in Google Colab
 
 Open the notebook with the button above (or
 [this link](https://colab.research.google.com/github/Sica997rius/Document-normalizer/blob/main/document_normalizer_colab.ipynb))
-and choose *Runtime → Run all*. No installation and no GitHub account are needed:
-the program is embedded in the notebook, which also creates sample files to analyze
-or lets you upload your own.
+and choose *Runtime → Run all*, then answer the questions of the program.
+No installation and no GitHub account are needed: the notebook downloads this
+repository, copies the 18 sample files of `test_files/` and runs the code of `src/`.
+You can also upload your own files.
 
 To share it, just send the link: everyone runs it in their own Colab session.
 
@@ -67,12 +69,6 @@ git clone https://github.com/Sica997rius/Document-normalizer.git
 cd Document-normalizer
 ```
 
-Extract the sample files (they end up in `sample_data/file_di_prova`):
-
-```bash
-python -m zipfile -e sample_data/file_di_prova.zip sample_data
-```
-
 Start the normalization from the `src` folder:
 
 ```bash
@@ -80,8 +76,8 @@ cd src
 python -m document_normalizer
 ```
 
-When it asks for the folder, type its path **relative to `src`**, for example
-`../sample_data/file_di_prova`.
+When it asks for the folder, type its path **relative to `src`**: for the 18 sample
+files, `../test_files`.
 
 Search the history (from the `src` folder too):
 
@@ -92,6 +88,26 @@ python -m ricerca
 Type the same folder, then one or more words: the documents containing **all** of
 them in the title, file name, paths, changes, date or excerpt are shown.
 Press Enter on an empty line to exit.
+
+## Sample files
+
+`test_files/` holds 18 random files that cover every case: TXT/MD/CSV in UTF-8,
+UTF-8 with BOM, cp1252 and UTF-16, CRLF/CR line endings, an empty file, a binary
+file disguised as text, disallowed extensions (`.py`, `.png`), subfolders and
+dates in the names.
+
+The program **rewrites and renames** them. To get the original 18 files back
+(from the repository folder):
+
+```bash
+python make_test_files.py test_files 18
+```
+
+`make_test_files.py` takes `[folder] [count] [seed]`; the same seed always gives
+the same files. For a larger test, e.g. 1000 files: `python make_test_files.py big_test 1000`.
+
+`sample_data/file_di_prova.zip` is a second, smaller set of hand-made examples
+(`python -m zipfile -e sample_data/file_di_prova.zip sample_data` extracts it).
 
 ## The `session.json` file
 
@@ -128,8 +144,10 @@ Document-normalizer/
 ├── LICENSE
 ├── requirements.txt
 ├── document_normalizer_colab.ipynb   # Google Colab notebook
+├── make_test_files.py                # creates the random sample files
+├── test_files/                       # the 18 sample files
 ├── sample_data/
-│   └── file_di_prova.zip             # sample files (encodings, binary, empty, dates...)
+│   └── file_di_prova.zip             # hand-made sample files
 └── src/
     ├── document_normalizer/          # normalization
     │   ├── __init__.py
