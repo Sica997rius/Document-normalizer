@@ -1,0 +1,18 @@
+[build-system]
+# In-tree backend (standard library only): "pip install ." needs no download,
+# so it also works offline and in a clean environment.
+requires = []
+build-backend = "backend"
+backend-path = ["_build"]
+
+[project]
+name = "document-normalizer"
+version = "0.1.0"
+description = "Normalizes the TXT, MD and CSV files of a folder and keeps the history in session.json."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+document-normalizer = "document_normalizer.main:main"
+ricerca = "ricerca.main:main"

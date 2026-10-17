@@ -1,6 +1,17 @@
-# The program itself needs NO external package: it only uses the Python
-# standard library (Python 3.9 or newer).
+# document-normalizer - requirements
 #
-# The packages below are needed only to run the automated tests:
-#   pip install -r requirements.txt
-pytest>=7.0
+# Python >= 3.9
+#
+# The project uses ONLY the Python standard library
+# (pathlib, dataclasses, typing, datetime, json, re, unicodedata, csv, io):
+# there are no external packages to install.
+#
+# No internet connection is needed: the package is built by _build/backend.py
+# (standard library only), so pip does not download setuptools.
+#
+# Install the package (from the project folder):
+#   pip install -r requirements.txt   (editable mode)
+#   or
+#   pip install .
+
+-e .

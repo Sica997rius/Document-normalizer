@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+.venv/
+venv/
+
+# Session history created by the program
+session.json
+
+# Folders created when testing (test_files/ is versioned on purpose)
+big_test/
+my_files/
+*.zip
+
+# dist/ is versioned on purpose: it holds the wheel used in Google Colab
