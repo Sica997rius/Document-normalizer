@@ -19,6 +19,11 @@ No installation and no GitHub account are needed: the notebook downloads this
 repository, copies the 18 sample files of `test_files/` and runs the code of `src/`.
 You can also upload your own files.
 
+The last cell, **Search the history**, is independent: it can be run alone at any
+time, even in a new Colab session. It downloads the program if needed, searches
+the `session.json` of the folder you set, and can also load a `session.json`
+saved from a previous run.
+
 To share it, just send the link: everyone runs it in their own Colab session.
 
 ## What it does
