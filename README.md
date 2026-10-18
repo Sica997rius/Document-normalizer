@@ -85,8 +85,11 @@ Search the history (from the `src` folder too):
 python -m ricerca
 ```
 
-Type the same folder, then one or more words: the documents containing **all** of
-them in the title, file name, paths, changes, date or excerpt are shown.
+The search is a separate program, independent from the normalization: it only
+reads the `session.json` of a folder. Type the analyzed folder (`../test_files`);
+if it has no `session.json`, it asks for another one (Enter stops).
+Then type one or more words: the documents containing **all** of them in the
+title, file name, paths, changes, date or excerpt are shown.
 Press Enter on an empty line to exit.
 
 ## Sample files
@@ -158,7 +161,7 @@ Document-normalizer/
     └── ricerca/                      # history search
         ├── __init__.py
         ├── __main__.py               # python -m ricerca
-        ├── main.py                   # load_history, search_documents, print_results, main()
+        ├── main.py                   # load_history, search_documents, print_results, main(folder)
         ├── models.py                 # same as document_normalizer/models.py
         └── readers.py                # same as document_normalizer/readers.py
 ```

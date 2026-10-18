@@ -54,11 +54,20 @@ def print_results(results):
   print("")
 
 
-def main():
-  folder = input("Which analyzed folder do you want to search? (Enter = current folder) ").strip()
-  full_history = load_history(folder or ".")
-  if not full_history:
-    return
+#Change(fix: the folder can be passed (e.g. from a notebook) and is asked again when it has no history - before, a wrong answer ended the search silently)
+def main(folder=None):
+  if folder is None:
+    folder = input("Which analyzed folder do you want to search? (Enter = current folder) ").strip() or "."
+  while True:
+    full_history = load_history(folder)
+    if full_history:
+      break
+    folder = input("Type the folder that contains session.json (or press Enter to stop): ").strip()
+    if not folder:
+      print("Search ended.")
+      return
+  documents = sum(len(session.get("documents", {})) for session in full_history)
+  print(f"History of '{folder}': {len(full_history)} session(s), {documents} document(s).\n")
 
   while True:
     search = input("Type words to search a document (or press Enter to exit): ").strip().lower()
